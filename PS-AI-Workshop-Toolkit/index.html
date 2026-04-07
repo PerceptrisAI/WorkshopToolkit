@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perceptris Use Case Workshop</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero">
+      <div class="hero__brand">
+        <img src="assets/logo_klein.png" alt="Perceptris Solutions Logo" class="hero__logo">
+        <div class="hero__copy">
+          <p class="eyebrow">Workshop Toolkit</p>
+          <h1>Use Cases erfassen &amp; priorisieren</h1>
+          <p class="hero__lead">Lokale Workshop-App für strukturierte Prozessaufnahme, Bewertung und Management-Auswertung.</p>
+        </div>
+      </div>
+      <div class="hero__meta">
+        <div class="meta-card">
+          <span class="meta-card__label">Unternehmen / Projekt</span>
+          <input id="projectName" name="projectName" type="text" placeholder="z. B. KI-Workshop Produktion & Vertrieb">
+        </div>
+        <div class="meta-card meta-card--stat">
+          <span class="meta-card__label">Gespeicherter Zustand</span>
+          <strong id="storageStatus">Noch nicht gespeichert</strong>
+          <small>Alle Daten liegen lokal im Browser und werden per JSON exportiert/importiert.</small>
+        </div>
+      </div>
+    </header>
+
+    <nav class="topnav" aria-label="Hauptnavigation">
+      <button class="topnav__button is-active" data-view="overview">Übersicht</button>
+      <button class="topnav__button" data-view="usecases">Use Cases</button>
+      <button class="topnav__button" data-view="dashboard">Dashboard</button>
+    </nav>
+
+    <main>
+      <section class="view is-active" data-view-panel="overview">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Quadrantenansicht</p>
+            <h2>Use Cases nach Zeit, Problemdruck und Automatisierbarkeit einordnen</h2>
+          </div>
+          <div class="section-head__actions">
+            <button class="button button--secondary" id="openWizardFromOverview">Neuen Use Case anlegen</button>
+            <button class="button button--ghost" id="focusHighestScore">Top-Kandidat fokussieren</button>
+          </div>
+        </div>
+
+        <div class="panel panel--network">
+          <div class="matrix-layout">
+            <div class="matrix-stage">
+              <div class="network-legend">
+                <span><i class="legend-dot legend-dot--yes"></i>Ja</span>
+                <span><i class="legend-dot legend-dot--maybe"></i>Teilweise</span>
+                <span><i class="legend-dot legend-dot--no"></i>Nein</span>
+              </div>
+              <canvas id="networkCanvas" width="1400" height="760" aria-label="Quadrantenmatrix"></canvas>
+              <div class="network-tooltip" id="networkTooltip" hidden></div>
+            </div>
+            <aside class="matrix-index" aria-label="Use-Case-Zuordnung">
+              <div class="matrix-index__header">
+                <h3>Use Cases</h3>
+                <span class="pill" id="matrixIndexCount">0</span>
+              </div>
+              <div class="matrix-index__list" id="matrixIndexList"></div>
+            </aside>
+          </div>
+        </div>
+
+        <article class="panel panel--utility">
+          <div class="panel__header">
+            <h3>Datenaktionen</h3>
+          </div>
+          <div class="utility-actions utility-actions--stack">
+            <button class="button button--secondary" id="exportJsonButton">JSON exportieren</button>
+            <label class="button button--ghost file-label">
+              JSON importieren
+              <input type="file" id="importJsonInput" accept="application/json">
+            </label>
+            <label class="button button--ghost file-label">
+              Multi-JSON importieren
+              <input type="file" id="multiImportJsonInput" accept="application/json" multiple>
+            </label>
+            <button class="button button--secondary" id="loadSampleButton">Demo-Datensatz laden</button>
+            <button class="button button--danger" id="resetAllButton">Alle Daten zurücksetzen</button>
+          </div>
+          <p class="utility-note">Der Demo-Datensatz deckt alle Domänen mit 1 bis 3 Prozessen ab und bleibt als Vorlage unverändert.</p>
+        </article>
+      </section>
+
+      <section class="view" data-view-panel="usecases">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Erfassung & Verwaltung</p>
+            <h2>Use Cases strukturiert anlegen und pflegen</h2>
+          </div>
+          <div class="section-head__actions">
+            <button class="button button--primary" id="startWizardButton">Neuen Use Case anlegen</button>
+          </div>
+        </div>
+
+        <div class="wizard-layout">
+          <article class="panel wizard-panel">
+            <div class="panel__header">
+              <h3 id="wizardTitle">Neuen Use Case anlegen</h3>
+              <span class="pill" id="wizardModeBadge">Wizard</span>
+            </div>
+            <div class="wizard-progress" id="wizardProgress"></div>
+
+            <form id="useCaseForm" novalidate>
+              <input type="hidden" name="useCaseId">
+
+              <div class="wizard-step is-active" data-step="0">
+                <h4>1. Kontext</h4>
+                <div class="form-grid form-grid--three">
+                  <label>
+                    Hierarchiestufe *
+                    <select name="hierarchyLevel" required></select>
+                  </label>
+                  <label>
+                    Domäne *
+                    <select name="domain" required></select>
+                  </label>
+                  <label>
+                    Rollenbezeichnung *
+                    <input name="roleTitle" type="text" maxlength="100" required placeholder="z. B. Vertriebsinnendienst">
+                  </label>
+                  <label class="span-2">
+                    Prozessname *
+                    <input name="processName" type="text" maxlength="120" required placeholder="z. B. Manuelle Angebotsfreigabe für Sonderteile">
+                    <small>Möglichst konkret formulieren.</small>
+                  </label>
+                </div>
+              </div>
+
+              <div class="wizard-step" data-step="1">
+                <h4>2. Prozessbild</h4>
+                <div class="form-grid">
+                  <label>
+                    Prozesscharakter
+                    <select name="descriptionCategory"></select>
+                  </label>
+                  <label class="span-2">
+                    Konkrete Beschreibung / Situation
+                    <textarea name="descriptionNote" rows="4" minlength="20" placeholder="z. B. Pro Schicht werden 40 Teile manuell geprüft, gezählt und in Excel dokumentiert."></textarea>
+                    <small>Mindestens 20 Zeichen, wenn du etwas einträgst.</small>
+                  </label>
+                </div>
+              </div>
+
+              <div class="wizard-step" data-step="2">
+                <h4>3. Frequenz, Aufwand und Kostensatz</h4>
+                <div class="form-grid">
+                  <label>
+                    Häufigkeit *
+                    <select name="frequency" required></select>
+                  </label>
+                  <label>
+                    Zeit pro Durchlauf in Minuten *
+                    <input name="minutesPerRun" type="number" min="1" step="1" required placeholder="25">
+                  </label>
+                  <label>
+                    Anzahl *
+                    <input name="countPerFrequency" type="number" min="1" step="1" required placeholder="8">
+                    <small>Bei täglich: Anzahl pro Arbeitstag.</small>
+                  </label>
+                  <label>
+                    Stundensatz *
+                    <div class="input-suffix">
+                      <input name="hourlyRate" type="number" min="0" step="1" value="20" required>
+                      <span>EUR</span>
+                    </div>
+                  </label>
+                </div>
+                <div class="metric-preview" id="liveComputationPreview"></div>
+              </div>
+
+              <div class="wizard-step" data-step="3">
+                <h4>4. Problembild</h4>
+                <div class="form-grid">
+                  <label>
+                    Problemdruck
+                    <select name="painLevel"></select>
+                  </label>
+                  <label>
+                    Fehleranfällig?
+                    <select name="errorProne"></select>
+                  </label>
+                  <label class="span-2">
+                    Notiz zur Fehleranfälligkeit
+                    <textarea name="errorProneNote" rows="3" minlength="20" placeholder="Optional: Welche Fehler treten typischerweise auf?"></textarea>
+                  </label>
+                </div>
+              </div>
+
+              <div class="wizard-step" data-step="4">
+                <h4>5. Daten- und Effizienzsicht</h4>
+                <div class="form-grid">
+                  <label>
+                    Datenlage
+                    <select name="dataAvailability"></select>
+                  </label>
+                  <fieldset class="span-2 checkbox-grid">
+                    <legend>Warum ineffizient?</legend>
+                    <label><input type="checkbox" name="inefficiencyReasons" value="Viele manuelle Schritte">Viele manuelle Schritte</label>
+                    <label><input type="checkbox" name="inefficiencyReasons" value="Viele Rückfragen oder Abstimmungen">Viele Rückfragen oder Abstimmungen</label>
+                    <label><input type="checkbox" name="inefficiencyReasons" value="Hoher Such- oder Rüstaufwand">Hoher Such- oder Rüstaufwand</label>
+                    <label><input type="checkbox" name="inefficiencyReasons" value="Informationen in mehreren Quellen">Informationen in mehreren Quellen</label>
+                    <label><input type="checkbox" name="inefficiencyReasons" value="Fehlende Standards oder klare Abläufe">Fehlende Standards oder klare Abläufe</label>
+                    <label><input type="checkbox" name="inefficiencyReasons" value="Manuelle Prüf- oder Dokumentationsarbeit">Manuelle Prüf- oder Dokumentationsarbeit</label>
+                  </fieldset>
+                  <label class="span-2">
+                    Kontextnotiz zur Ineffizienz
+                    <textarea name="inefficiencyNote" rows="3" minlength="20" placeholder="Optional: Wo genau entstehen Wartezeit, Mehrarbeit oder Fehler?"></textarea>
+                  </label>
+                </div>
+              </div>
+
+              <div class="wizard-step" data-step="5">
+                <h4>6. Potenzial</h4>
+                <div class="form-grid">
+                  <label>
+                    Automatisierbarkeit
+                    <select name="automatable"></select>
+                  </label>
+                  <label>
+                    Impact
+                    <select name="impact"></select>
+                  </label>
+                </div>
+              </div>
+
+              <div class="wizard-actions">
+                <button class="button button--ghost" type="button" id="wizardBack">Zurück</button>
+                <div class="wizard-actions__main">
+                  <button class="button button--secondary" type="button" id="wizardNext">Weiter</button>
+                  <button class="button button--primary" type="submit" id="wizardSave">Use Case speichern</button>
+                </div>
+              </div>
+            </form>
+
+            <div class="form-message" id="formMessage" aria-live="polite"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel__header">
+              <h3>Filter & Tabelle</h3>
+              <span class="pill" id="tableCountBadge">0 Einträge</span>
+            </div>
+
+            <div class="filters">
+              <label>
+                Rolle
+                <select id="filterRole"></select>
+              </label>
+              <label>
+                Automatisierbarkeit
+                <select id="filterAutomatable"></select>
+              </label>
+              <label>
+                Impact
+                <select id="filterImpact"></select>
+              </label>
+              <label>
+                Sortierung
+                <select id="sortBy">
+                  <option value="score">Priorisierungsscore</option>
+                  <option value="weeklyMinutes">Zeitaufwand pro Woche</option>
+                  <option value="painLevel">Problemdruck</option>
+                  <option value="annualCost">Jährliche Kosten</option>
+                  <option value="impact">Impact</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Prozess</th>
+                    <th>Rolle</th>
+                    <th>Zeit/Woche</th>
+                    <th>Stundensatz</th>
+                    <th>Jahreskosten</th>
+                    <th>Score</th>
+                    <th>Impact</th>
+                    <th>Aktionen</th>
+                  </tr>
+                </thead>
+                <tbody id="useCaseTableBody"></tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" data-view-panel="dashboard">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Management Dashboard</p>
+            <h2>KPIs, Visualisierungen und Executive Summary</h2>
+          </div>
+        </div>
+
+        <div class="kpi-grid" id="kpiGrid"></div>
+
+        <div class="dashboard-grid">
+          <article class="panel">
+            <div class="panel__header"><h3>Durchschnittlicher Automatisierungsgrad</h3></div>
+            <div id="automationDonut" class="chart-slot"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel__header"><h3>Top Use Cases nach Score</h3></div>
+            <div id="topScoreChart" class="chart-slot"></div>
+          </article>
+
+          <article class="panel panel--wide">
+            <div class="panel__header"><h3>Zeitaufwand pro Rolle und Woche</h3></div>
+            <div id="roleTimeChart" class="chart-slot"></div>
+          </article>
+
+          <article class="panel panel--wide">
+            <div class="panel__header"><h3>Verteilungen</h3></div>
+            <div class="distribution-grid">
+              <div id="painChart" class="chart-slot chart-slot--small"></div>
+              <div id="impactChart" class="chart-slot chart-slot--small"></div>
+              <div id="automatableChart" class="chart-slot chart-slot--small"></div>
+            </div>
+          </article>
+
+          <article class="panel panel--wide">
+            <div class="panel__header"><h3>Domänenradar</h3></div>
+            <div id="domainRadarChart" class="chart-slot"></div>
+          </article>
+
+          <article class="panel panel--wide">
+            <div class="panel__header"><h3>Executive Summary</h3></div>
+            <div id="executiveSummary" class="summary-list"></div>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <template id="emptyStateTemplate">
+    <div class="empty-state">
+      <h3>Noch keine Use Cases vorhanden</h3>
+      <p>Lege den ersten Use Case im Wizard an oder lade die Beispieldaten.</p>
+    </div>
+  </template>
+
+  <script src="assets/app.js"></script>
+</body>
+</html>
