@@ -654,3 +654,35 @@ th { color: var(--text-soft); font-size: 0.85rem; }
   .checkbox-grid { grid-template-columns: 1fr; }
   table { min-width: 860px; }
 }
+
+/* ===== DEMO MODE ===== */
+/* Von KI-Agent hinzugefügt: Demo-Hintergrund für Workshop */
+:root:has(~ .demo-indicator) {
+  --bg: #f0f4ff;
+  --primary: #7c3aed;
+}
+
+body.demo-mode {
+  background:
+    radial-gradient(circle at top right, rgba(124, 58, 237, 0.12), transparent 24%),
+    linear-gradient(180deg, #ffffff 0%, #f0f4ff 100%) !important;
+}
+
+.demo-indicator {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #7c3aed;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  z-index: 9999;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+}
+
+.demo-indicator::before {
+  content: "🎭 ";
+}

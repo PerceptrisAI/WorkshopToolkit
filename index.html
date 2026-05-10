@@ -354,5 +354,31 @@
   </template>
 
   <script src="assets/app.js"></script>
+  <div class="demo-indicator" id="demoBadge">DEMO: KI-Agent Hintergrund</div>
 </body>
 </html>
+<script>
+// KI-Agent Demo Toggle
+(function() {
+  const DEMO_KEY = 'perceptris-demo-active';
+  
+  function toggleDemo(on) {
+    document.body.classList.toggle('demo-mode', on);
+    document.getElementById('demoBadge').textContent = on ? '🎭 DEMO: Aktiv' : '🎭 DEMO: Deaktiviert';
+    localStorage.setItem(DEMO_KEY, on ? '1' : '0');
+  }
+  
+  // Init from localStorage
+  if (localStorage.getItem(DEMO_KEY) === '1') {
+    document.body.classList.add('demo-mode');
+  }
+  
+  // Toggle on double-click of badge
+  document.getElementById('demoBadge').addEventListener('dblclick', function() {
+    toggleDemo(!document.body.classList.contains('demo-mode'));
+  });
+  
+  // Expose global toggle for KI agent
+  window.__demoToggle = function(on) { toggleDemo(on); };
+})();
+</script>
